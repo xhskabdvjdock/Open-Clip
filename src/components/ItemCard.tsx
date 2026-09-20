@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { ClipboardItem, ContentType } from "../types";
 import { preview, timeAgo } from "../lib/format";
+import { useImagePreview } from "../lib/useImagePreview";
 import { useStore } from "../lib/store";
 
 export function TypeIcon({ type, className = "h-3.5 w-3.5" }: { type: ContentType; className?: string }) {
@@ -58,6 +59,7 @@ export default function ItemCard({
 }) {
   const { strings: t, lang, doCopy, doPin, doDelete, lastCopiedId } = useStore();
   const copied = lastCopiedId === item.id;
+  const thumb = useImagePreview(item, 112);
 
   return (
     <div
@@ -73,13 +75,22 @@ export default function ItemCard({
           <code className="codeblock item-preview whitespace-pre-wrap text-neutral-800 dark:text-neutral-100">
             {preview(item.content, 220)}
           </code>
-        ) : item.content_type === "image" && item.image_path ? (
-          <span className="flex items-center gap-2">
-            <img
-              src={item.image_path}
-              alt="clipboard"
-              className="h-10 w-10 rounded border border-neutral-200 object-cover dark:border-neutral-700"
-            />
+        ) : item.content_type === "image" ? (
+          <span className="flex items-center gap-2.5">
+            {thumb ? (
+              <img
+                src={thumb}
+                alt="clipboard"
+                className="h-11 w-11 shrink-0 rounded-md border border-neutral-200 object-cover dark:border-neutral-700"
+              />
+            ) : (
+              <span
+                aria-hidden
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-neutral-200 bg-neutral-100 text-neutral-400 dark:border-neutral-700 dark:bg-neutral-900"
+              >
+                <ImageIcon className="h-5 w-5" />
+              </span>
+            )}
             <span className="item-preview text-neutral-800 dark:text-neutral-100">
               {preview(item.content || "Image", 120)}
             </span>

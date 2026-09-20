@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { ClipboardItem } from "./types";
 import { useStore } from "./lib/store";
 import { copyText, hidePickerWindow, isTauriEnv } from "./lib/store-api";
 import { preview, timeAgo } from "./lib/format";
+import { useImagePreview } from "./lib/useImagePreview";
 import { TypeIcon, typeLabel } from "./components/ItemCard";
 
 /**
@@ -12,7 +14,7 @@ import { TypeIcon, typeLabel } from "./components/ItemCard";
  * Up / Down / Enter / Esc / Ctrl+F focusing.
  */
 export default function Picker() {
-  const { strings: t, lang, items } = useStore();
+  const { strings: t, lang, items, settings } = useStore();
   const [q, setQ] = useState("");
   const [idx, setIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -69,11 +71,20 @@ export default function Picker() {
 
   async function choose(item: ClipboardItem) {
     try {
-      await copyText(item.content);
+      if (isTauriEnv() && settings.pasteAutomatically) {
+        // Real auto-paste: copy + hide + refocus previous app + Ctrl+V.
+        await invoke("paste_item_by_id", { id: item.id });
+      } else {
+        await copyText(item.content);
+        await hidePickerWindow();
+      }
     } catch {
-      /* ignore */
+      try {
+        await hidePickerWindow();
+      } catch {
+        /* ignore */
+      }
     }
-    await hidePickerWindow();
   }
 
   function onKey(e: React.KeyboardEvent) {
@@ -126,29 +137,15 @@ export default function Picker() {
 
       <ul ref={listRef} className="flex-1 overflow-y-auto p-1.5" role="listbox" aria-label={t.quickPaste}>
         {list.map((item, i) => (
-          <li key={item.id}>
-            <button
-              data-idx={i}
-              role="option"
-              aria-selected={i === idx}
-              onMouseEnter={() => setIdx(i)}
-              onClick={() => void choose(item)}
-              onKeyDown={onKey}
-              className={`block w-full rounded-lg px-3 py-2 text-start ${
-                i === idx ? "bg-neutral-100 dark:bg-neutral-700" : ""
-              }`}
-            >
-              <span className="item-preview text-[13.5px] leading-5 text-neutral-800 dark:text-neutral-100">
-                {preview(item.content, 140)}
-              </span>
-              <span className="mt-1 flex items-center gap-1.5 text-[11.5px] text-neutral-500 dark:text-neutral-400">
-                <TypeIcon type={item.content_type} className="h-3 w-3" />
-                <span className="capitalize">{typeLabel(item.content_type, t)}</span>
-                <span aria-hidden>·</span>
-                <span>{timeAgo(item.last_copied_at, lang)}</span>
-              </span>
-            </button>
-          </li>
+          <PickerRow
+            key={item.id}
+            item={item}
+            index={i}
+            selected={i === idx}
+            onHover={() => setIdx(i)}
+            onChoose={() => void choose(item)}
+            onKey={onKey}
+          />
         ))}
         {list.length === 0 && (
           <li className="px-3 py-8 text-center text-[13px] text-neutral-500">{t.noResults}</li>
@@ -167,6 +164,71 @@ export default function Picker() {
         </span>
       </div>
     </div>
+  );
+}
+
+function PickerRow({
+  item,
+  index,
+  selected,
+  onHover,
+  onChoose,
+  onKey,
+}: {
+  item: ClipboardItem;
+  index: number;
+  selected: boolean;
+  onHover: () => void;
+  onChoose: () => void;
+  onKey: (e: React.KeyboardEvent) => void;
+}) {
+  const { strings: t, lang } = useStore();
+  const thumb = useImagePreview(item, 64);
+  const isImage = item.content_type === "image";
+
+  return (
+    <li>
+      <button
+        data-idx={index}
+        role="option"
+        aria-selected={selected}
+        onMouseEnter={onHover}
+        onClick={onChoose}
+        onKeyDown={onKey}
+        className={`block w-full rounded-lg px-3 py-2 text-start ${
+          selected ? "bg-neutral-100 dark:bg-neutral-700" : ""
+        }`}
+      >
+        <span className="flex items-center gap-2.5">
+          {isImage &&
+            (thumb ? (
+              <img
+                src={thumb}
+                alt=""
+                className="h-9 w-9 shrink-0 rounded-md border border-neutral-200 object-cover dark:border-neutral-600"
+              />
+            ) : (
+              <span
+                aria-hidden
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-neutral-200 bg-neutral-100 text-neutral-400 dark:border-neutral-600 dark:bg-neutral-800"
+              >
+                <TypeIcon type="image" className="h-4 w-4" />
+              </span>
+            ))}
+          <span className="min-w-0 flex-1">
+            <span className="item-preview text-[13.5px] leading-5 text-neutral-800 dark:text-neutral-100">
+              {preview(item.content, 140)}
+            </span>
+            <span className="mt-1 flex items-center gap-1.5 text-[11.5px] text-neutral-500 dark:text-neutral-400">
+              <TypeIcon type={item.content_type} className="h-3 w-3" />
+              <span className="capitalize">{typeLabel(item.content_type, t)}</span>
+              <span aria-hidden>·</span>
+              <span>{timeAgo(item.last_copied_at, lang)}</span>
+            </span>
+          </span>
+        </span>
+      </button>
+    </li>
   );
 }
 

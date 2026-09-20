@@ -27,6 +27,8 @@ chrono = "0.4"
 regex = "1"
 image = "0.25"
 uuid = { version = "1", features = ["v4"] }
+enigo = "0.6"
+base64 = "0.22"
 
 [features]
 default = [ "custom-protocol" ]

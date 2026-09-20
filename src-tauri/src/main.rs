@@ -151,6 +151,107 @@ struct Paths {
 struct MonitorState {
     last_hash: Mutex<String>,
     self_copy_until: Mutex<i64>,
+    /// Foreground window captured before the picker steals focus,
+    /// so auto-paste can return to it. Windows-only (HWND as isize).
+    paste_target: Mutex<Option<isize>>,
+}
+
+/// Windows foreground-window save/restore so auto-paste lands in the app
+/// the user was working in — not in our picker. Manual FFI keeps the
+/// dependency tree small (three user32 calls, no extra crates).
+#[cfg(target_os = "windows")]
+mod win_focus {
+    type HWND = isize;
+    type BOOL = i32;
+    type DWORD = u32;
+
+    #[link(name = "user32")]
+    unsafe extern "system" {
+        fn GetForegroundWindow() -> HWND;
+        fn SetForegroundWindow(h_wnd: HWND) -> BOOL;
+        fn GetWindowThreadProcessId(h_wnd: HWND, lpdw_process_id: *mut DWORD) -> DWORD;
+        fn AttachThreadInput(id_attach: DWORD, id_attach_to: DWORD, f_attach: BOOL) -> BOOL;
+        fn BringWindowToTop(h_wnd: HWND) -> BOOL;
+        fn SetFocus(h_wnd: HWND) -> HWND;
+    }
+
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn GetCurrentThreadId() -> DWORD;
+    }
+
+    /// Handle of the currently-foreground window (None if unavailable).
+    pub fn current() -> Option<isize> {
+        unsafe {
+            let h = GetForegroundWindow();
+            if h == 0 {
+                None
+            } else {
+                Some(h)
+            }
+        }
+    }
+
+    /// Best-effort restore of a previously saved foreground window.
+    pub fn restore(h: isize) {
+        unsafe {
+            if SetForegroundWindow(h) != 0 {
+                return;
+            }
+            // Foreground-lock fallback: briefly attach our input thread to the
+            // foreground thread, then force the target window to the front.
+            let fg = GetForegroundWindow();
+            let mut _pid = 0u32;
+            let fg_tid = GetWindowThreadProcessId(fg, &mut _pid);
+            let cur_tid = GetCurrentThreadId();
+            if fg_tid != 0 && cur_tid != 0 && AttachThreadInput(cur_tid, fg_tid, 1) != 0 {
+                BringWindowToTop(h);
+                SetFocus(h);
+                SetForegroundWindow(h);
+                AttachThreadInput(cur_tid, fg_tid, 0);
+            }
+        }
+    }
+}
+
+/// Remember which window was in front before the picker steals focus.
+/// The picker itself is never a valid paste target.
+fn capture_paste_target(app: &AppHandle) {
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(ms) = app.try_state::<MonitorState>() {
+            let picker_focused = app
+                .get_webview_window("picker")
+                .map(|w| w.is_focused().unwrap_or(false))
+                .unwrap_or(false);
+            if !picker_focused {
+                *ms.paste_target.lock().unwrap() = win_focus::current();
+            }
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = app;
+    }
+}
+
+/// Simulate the OS paste shortcut (Ctrl+V, Cmd+V on macOS).
+/// Errors are non-fatal: the clipboard already holds the content,
+/// so a failure degrades gracefully to copy-only behavior.
+fn send_paste_keys() -> Result<(), String> {
+    use enigo::{Direction, Enigo, Key, Keyboard, Settings};
+    let mut enigo = Enigo::new(&Settings::default()).map_err(|e| e.to_string())?;
+    #[cfg(target_os = "macos")]
+    let modifier = Key::Meta;
+    #[cfg(not(target_os = "macos"))]
+    let modifier = Key::Control;
+    enigo
+        .key(modifier, Direction::Press)
+        .map_err(|e| e.to_string())?;
+    // Physical V key: layout-safe paste shortcut (not Unicode typing).
+    let r = enigo.key(Key::V, Direction::Click);
+    let _ = enigo.key(modifier, Direction::Release);
+    r.map_err(|e| e.to_string())
 }
 
 // ============================== Paths / DB ==============================
@@ -964,6 +1065,125 @@ fn copy_item_by_id(app: AppHandle, state: State<Paths>, id: String) -> Result<()
 }
 
 #[tauri::command]
+fn paste_item_by_id(app: AppHandle, state: State<Paths>, id: String) -> Result<(), String> {
+    // 1. Look up the item.
+    let (content, image_path): (String, Option<String>) = open_conn(&state)
+        .map_err(|e| e.to_string())?
+        .query_row(
+            "SELECT content, image_path FROM clipboard_items WHERE id = ?1",
+            params![id],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .map_err(|e| e.to_string())?;
+
+    // 2. Write it to the system clipboard (text or image).
+    if let Some(p) = image_path {
+        if let Ok(bytes) = std::fs::read(&p) {
+            if let Ok(dyn_img) = image::load_from_memory(&bytes) {
+                let rgba = dyn_img.to_rgba8();
+                let data = ImageData {
+                    width: rgba.width() as usize,
+                    height: rgba.height() as usize,
+                    bytes: Cow::Owned(rgba.into_raw()),
+                };
+                if let Ok(mut cb) = Clipboard::new() {
+                    let _ = cb.set_image(data);
+                }
+            }
+        }
+    } else if let Ok(mut cb) = Clipboard::new() {
+        cb.set_text(content.clone()).map_err(|e| e.to_string())?;
+    } else {
+        return Err("clipboard unavailable".into());
+    }
+    if let Some(ms) = app.try_state::<MonitorState>() {
+        *ms.self_copy_until.lock().unwrap() = Utc::now().timestamp_millis() + 1500;
+        *ms.last_hash.lock().unwrap() = sha256_hex(content.as_bytes());
+    }
+
+    // 3. Refresh last_copied_at + notify the UI.
+    if let Ok(conn) = open_conn(&state) {
+        let now = Utc::now().timestamp_millis();
+        let _ = conn.execute(
+            "UPDATE clipboard_items SET last_copied_at = ?1 WHERE id = ?2",
+            params![now, id],
+        );
+        if let Ok(items) = fetch_items(&conn, 1000) {
+            let _ = app.emit("clipboard://list-changed", &items);
+        }
+    }
+
+    // 4. Hide the picker immediately so focus can return to the target app.
+    if let Some(w) = app.get_webview_window("picker") {
+        let _ = w.hide();
+    }
+
+    // 5. Auto-paste: restore the previous window, then send Ctrl/Cmd+V.
+    //    Any failure here silently keeps the copy-only behavior.
+    if load_settings(&state).paste_automatically {
+        #[cfg(target_os = "windows")]
+        {
+            std::thread::sleep(Duration::from_millis(80));
+            let target = app
+                .try_state::<MonitorState>()
+                .and_then(|ms| *ms.paste_target.lock().unwrap());
+            if let Some(h) = target {
+                win_focus::restore(h);
+                std::thread::sleep(Duration::from_millis(120));
+                let _ = send_paste_keys();
+            }
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            std::thread::sleep(Duration::from_millis(120));
+            let _ = send_paste_keys();
+        }
+    }
+    Ok(())
+}
+
+/// Image preview as a data URL, resized on demand with a size cap.
+/// Only files inside our own images dir are served (traversal guard),
+/// so a crafted DB row can never leak arbitrary local files to the UI.
+#[tauri::command]
+fn get_image_preview(
+    state: State<Paths>,
+    id: String,
+    max_side: Option<u32>,
+) -> Result<String, String> {
+    use base64::{engine::general_purpose::STANDARD as B64, Engine as _};
+    use std::io::Cursor;
+
+    let path: Option<String> = open_conn(&state)
+        .map_err(|e| e.to_string())?
+        .query_row(
+            "SELECT image_path FROM clipboard_items WHERE id = ?1",
+            params![id],
+            |r| r.get(0),
+        )
+        .map_err(|e| e.to_string())?;
+    let p = path.filter(|s| !s.is_empty()).ok_or("no image")?;
+    let canonical = std::fs::canonicalize(&p).map_err(|e| e.to_string())?;
+    let dir = std::fs::canonicalize(&state.images_dir).map_err(|e| e.to_string())?;
+    if !canonical.starts_with(&dir) {
+        return Err("forbidden".into());
+    }
+    let bytes = std::fs::read(&canonical).map_err(|e| e.to_string())?;
+    let dyn_img = image::load_from_memory(&bytes).map_err(|e| e.to_string())?;
+    let side = max_side.unwrap_or(320).clamp(32, 1024);
+    // thumbnail() only shrinks, never enlarges — small images stay sharp.
+    let thumb = dyn_img.thumbnail(side, side);
+    let mut buf = Cursor::new(Vec::new());
+    thumb
+        .write_to(&mut buf, image::ImageFormat::Png)
+        .map_err(|e| e.to_string())?;
+    Ok(format!(
+        "data:image/png;base64,{}",
+        B64.encode(buf.into_inner())
+    ))
+}
+
+#[tauri::command]
 fn force_save_text(
     app: AppHandle,
     state: State<Paths>,
@@ -1119,6 +1339,7 @@ fn delete_all_data(app: AppHandle, state: State<Paths>) -> Result<(), String> {
 
 #[tauri::command]
 fn show_picker(app: AppHandle) -> Result<(), String> {
+    capture_paste_target(&app);
     if let Some(w) = app.get_webview_window("picker") {
         w.show().map_err(|e| e.to_string())?;
         w.set_focus().map_err(|e| e.to_string())?;
@@ -1272,6 +1493,7 @@ fn toggle_picker(app: &AppHandle) {
         if w.is_visible().unwrap_or(false) {
             let _ = w.hide();
         } else {
+            capture_paste_target(app);
             let _ = w.show();
             let _ = w.set_focus();
             let _ = w.center();
@@ -1398,6 +1620,7 @@ fn main() {
         .manage(MonitorState {
             last_hash: Mutex::new(String::new()),
             self_copy_until: Mutex::new(0),
+            paste_target: Mutex::new(None),
         })
         .setup(|app| {
             let paths = resolve_paths(app.handle());
@@ -1454,6 +1677,8 @@ fn main() {
             set_monitoring_paused,
             copy_to_clipboard,
             copy_item_by_id,
+            paste_item_by_id,
+            get_image_preview,
             force_save_text,
             toggle_pin,
             delete_item,

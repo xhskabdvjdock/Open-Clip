@@ -3,7 +3,8 @@ import { AlertTriangle, Copy, ExternalLink, Pin, Trash2, X } from "lucide-react"
 import { openUrl } from "@tauri-apps/plugin-opener";
 import type { ClipboardItem } from "../types";
 import { useStore } from "../lib/store";
-import { counts, fullDate } from "../lib/format";
+import { counts, fullDate, preview } from "../lib/format";
+import { useImagePreview } from "../lib/useImagePreview";
 import { isTauriEnv } from "../lib/store-api";
 import { typeLabel } from "./ItemCard";
 
@@ -82,6 +83,7 @@ export function DetailsModal({
 }) {
   const { strings: t, lang, doCopy, doPin, doDelete } = useStore();
   const c = counts(item.content);
+  const fullPreview = useImagePreview(item, 768);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -126,12 +128,18 @@ export function DetailsModal({
                 {item.content}
               </code>
             </pre>
-          ) : item.content_type === "image" && item.image_path ? (
-            <img
-              src={item.image_path}
-              alt="clipboard preview"
-              className="max-h-64 rounded-lg border border-neutral-200 object-contain dark:border-neutral-700"
-            />
+          ) : item.content_type === "image" ? (
+            fullPreview ? (
+              <img
+                src={fullPreview}
+                alt="clipboard preview"
+                className="max-h-64 rounded-lg border border-neutral-200 object-contain dark:border-neutral-700"
+              />
+            ) : (
+              <span className="flex h-32 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-100 text-[13px] text-neutral-400 dark:border-neutral-700 dark:bg-neutral-900">
+                {preview(item.content || "Image", 60)}
+              </span>
+            )
           ) : (
             <p className="whitespace-pre-wrap break-words text-[14px] leading-6 text-neutral-900 dark:text-neutral-50">
               {item.content}
