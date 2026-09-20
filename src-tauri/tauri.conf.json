@@ -1,0 +1,65 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Open Clip",
+  "version": "1.0.0",
+  "identifier": "com.openclip.desktop",
+  "build": {
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Open Clip",
+        "width": 800,
+        "height": 620,
+        "minWidth": 480,
+        "minHeight": 480,
+        "center": true,
+        "visible": false,
+        "decorations": true
+      },
+      {
+        "label": "picker",
+        "title": "Open Clip — Quick Paste",
+        "url": "index.html#picker",
+        "width": 460,
+        "height": 540,
+        "minWidth": 360,
+        "minHeight": 300,
+        "center": true,
+        "decorations": false,
+        "transparent": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visible": false,
+        "focus": true
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "trayIcon": {
+      "iconPath": "icons/32x32.png",
+      "iconAsTemplate": true,
+      "menuOnLeftClick": false
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "Utility",
+    "shortDescription": "Lightweight private clipboard manager",
+    "longDescription": "Open Clip is a fast, local-only clipboard manager. Press Ctrl+Shift+V to paste."
+  }
+}

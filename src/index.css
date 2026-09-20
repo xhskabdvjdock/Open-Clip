@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Native desktop feel: flat, minimal, no gradients / glass / neon */
+
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-neutral-100 text-neutral-900 antialiased;
+  font-family: "IBM Plex Sans Arabic", "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.dark body {
+  @apply bg-neutral-900 text-neutral-100;
+}
+
+/* Subtle scrollbars, desktop-like */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  @apply bg-neutral-300 rounded-md border-2 border-solid border-transparent bg-clip-padding;
+}
+.dark *::-webkit-scrollbar-thumb {
+  @apply bg-neutral-700;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Focus states for a11y */
+:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+
+/* Picker window: frameless feel */
+.picker-window body,
+body.picker {
+  @apply bg-white dark:bg-neutral-900;
+  overflow: hidden;
+}
+
+.item-preview {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+code.codeblock {
+  font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  font-size: 12.5px;
+}
+
+/* Light animations only */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 120ms ease-out;
+}
+
+/* RTL: logical properties mostly handled by Tailwind + dir attr */
+[dir="rtl"] .ltr-only {
+  direction: ltr;
+  unicode-bidi: isolate;
+}

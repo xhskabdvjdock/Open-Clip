@@ -1,0 +1,23 @@
+# Deps / build output
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/WixTools/
+
+# Tauri debug artifacts
+*.AppImage
+*.deb
+*.dmg
+*.exe
+*.msi
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
