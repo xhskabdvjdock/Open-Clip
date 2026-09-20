@@ -7,16 +7,17 @@ import {
   Download,
   Lock,
   MonitorUp,
+  RefreshCw,
   Trash2,
   Upload,
   Zap,
 } from "lucide-react";
 import type { AutoDelete, HistoryLimit, SensitiveMode } from "../types";
+import { APP_VERSION } from "../version";
 import { useStore } from "../lib/store";
 import { isTauriEnv } from "../lib/store-api";
+import { useUpdateCheck } from "../lib/updates";
 import { Banner, ConfirmModal } from "./Modals";
-
-const APP_VERSION = "1.0.0";
 
 export default function Settings({ onClose }: { onClose: () => void }) {
   const { strings: t, settings: s, updateSettings, doDeleteAll } = useStore();
@@ -27,6 +28,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const update = useUpdateCheck(false);
 
   async function handleExport(kind: "json" | "csv") {
     setMsg(null);
@@ -292,6 +294,32 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                 <p className="text-[16px] font-semibold">Open Clip</p>
                 <p className="text-neutral-500 dark:text-neutral-400">
                   {t.version}: {APP_VERSION} · {t.license}: MIT
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => void update.recheck()}
+                    disabled={update.status === "checking"}
+                    className="flex items-center gap-1.5 rounded-lg border border-neutral-300 px-3 py-1.5 text-[13px] font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-700"
+                  >
+                    <RefreshCw
+                      className={`h-3.5 w-3.5 ${update.status === "checking" ? "animate-spin" : ""}`}
+                    />
+                    {t.checkUpdates}
+                  </button>
+                  {update.status === "available" && update.info && (
+                    <span className="text-blue-700 dark:text-blue-300">
+                      {t.updateAvailable} (v{update.info.version})
+                    </span>
+                  )}
+                  {update.status === "up-to-date" && (
+                    <span className="text-green-700 dark:text-green-300">{t.upToDate} ✓</span>
+                  )}
+                  {update.status === "error" && (
+                    <span className="text-red-600 dark:text-red-300">{t.updateCheckFailed}</span>
+                  )}
+                </div>
+                <p className="text-[12.5px] text-neutral-500 dark:text-neutral-400">
+                  {t.updatePrivacyNote}
                 </p>
                 <p className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-300">
                   <MonitorUp className="h-4 w-4" /> {t.privacyBody}

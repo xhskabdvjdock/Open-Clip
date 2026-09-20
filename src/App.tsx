@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  ArrowDownToLine,
   BellOff,
   ClipboardList,
   Pause,
@@ -9,9 +10,11 @@ import {
   Settings as SettingsIcon,
   ShieldAlert,
   Trash2,
+  X,
 } from "lucide-react";
 import type { ClipboardItem, DateFilter, TypeFilter } from "./types";
 import { useStore } from "./lib/store";
+import { openReleasePage, useUpdateCheck } from "./lib/updates";
 import ItemCard from "./components/ItemCard";
 import Settings from "./components/Settings";
 import Onboarding from "./components/Onboarding";
@@ -43,6 +46,7 @@ export default function App() {
   } = useStore();
 
   const [showSettings, setShowSettings] = useState(false);
+  const update = useUpdateCheck(true);
   const [showCommand, setShowCommand] = useState(false);
   const [showClear, setShowClear] = useState(false);
   const [details, setDetails] = useState<ClipboardItem | null>(null);
@@ -169,6 +173,30 @@ export default function App() {
 
       {/* Notices */}
       <div className="mt-2.5 space-y-2">
+        {update.visible && update.info && (
+          <div
+            role="status"
+            className="flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-[13px] text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-100"
+          >
+            <ArrowDownToLine className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="flex-1">
+              {t.updateAvailable} (v{update.info.version})
+            </span>
+            <button
+              onClick={() => void openReleasePage(update.info!.url)}
+              className="shrink-0 rounded-md bg-blue-700 px-2.5 py-1 text-[12px] font-medium text-white hover:bg-blue-800"
+            >
+              {t.downloadUpdate}
+            </button>
+            <button
+              onClick={update.dismiss}
+              aria-label={t.cancel}
+              className="shrink-0 rounded p-0.5 hover:bg-black/5 dark:hover:bg-white/10"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
         {monitorError && (
           <Banner kind="error">
             {t.errorMonitor}
