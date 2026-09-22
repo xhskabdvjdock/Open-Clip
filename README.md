@@ -49,6 +49,20 @@ https://v2.tauri.app/start/prerequisites/
 npm run tauri:build
 ```
 
+## Releasing a new version
+
+One command bumps the version everywhere (`package.json`,
+`src/version.ts`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`):
+
+```bash
+npm run version:patch   # 1.0.0 -> 1.0.1  (fixes)
+npm run version:minor   # 1.0.0 -> 1.1.0  (features)
+npm run version:major   # 1.0.0 -> 2.0.0  (breaking)
+```
+
+Then build, and publish a GitHub Release tagged `vX.Y.Z` with the new
+setup exe attached — the in-app update banner picks it up automatically.
+
 ## Project layout
 
 ```
