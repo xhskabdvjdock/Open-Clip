@@ -95,8 +95,8 @@ export default function App() {
   return (
     <div className="mx-auto flex h-full max-w-3xl flex-col px-4 pb-4 pt-3">
       {/* Header */}
-      <header className="flex items-center justify-between">
-        <h1 className="flex items-center gap-2 text-[15px] font-semibold text-neutral-900 dark:text-neutral-50">
+      <header className="app-header flex items-center justify-between">
+        <h1 className="app-header-title flex items-center gap-2 text-[15px] font-semibold text-neutral-900 dark:text-neutral-50">
           <ClipboardList className="h-5 w-5" aria-hidden />
           {t.appName}
         </h1>
@@ -142,7 +142,7 @@ export default function App() {
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t.searchPlaceholder}
           aria-label={t.searchPlaceholder}
-          className="w-full rounded-lg border border-neutral-300 bg-white py-2 pe-3 ps-9 text-[14px] outline-none placeholder:text-neutral-400 focus:border-neutral-400 dark:border-neutral-600 dark:bg-neutral-800 dark:focus:border-neutral-500"
+          className="app-search w-full rounded-lg border border-neutral-300 bg-white py-2 pe-3 ps-9 text-[14px] outline-none placeholder:text-neutral-400 focus:border-neutral-400 dark:border-neutral-600 dark:bg-neutral-800 dark:focus:border-neutral-500"
         />
       </div>
 
@@ -233,7 +233,7 @@ export default function App() {
       </div>
 
       {/* Content */}
-      <main className="mt-3 flex-1 overflow-y-auto pb-2" role="main">
+      <main className="textscale mt-3 flex-1 overflow-y-auto pb-2" role="main">
         {isEmpty ? (
           <EmptyState />
         ) : (
@@ -241,7 +241,7 @@ export default function App() {
             {pinned.length > 0 && (
               <section aria-label={t.pinned}>
                 <SectionTitle icon={<Pin className="h-3.5 w-3.5" />} label={t.pinned} />
-                <div className="space-y-2" role="list">
+                <div className="clip-list space-y-2" role="list">
                   {pinned.map((i) => (
                     <ItemCard key={i.id} item={i} onOpenDetails={setDetails} />
                   ))}
@@ -259,7 +259,7 @@ export default function App() {
                     <Trash2 className="h-3.5 w-3.5" /> {t.clearHistory}
                   </button>
                 </div>
-                <div className="space-y-2" role="list">
+                <div className="clip-list space-y-2" role="list">
                   {unpinnedFiltered.map((i) => (
                     <ItemCard key={i.id} item={i} onOpenDetails={setDetails} />
                   ))}
@@ -276,7 +276,7 @@ export default function App() {
       </main>
 
       {/* Footer hint */}
-      <footer className="flex items-center justify-between border-t border-neutral-200 pt-2 text-[12px] text-neutral-400 dark:border-neutral-700 dark:text-neutral-500">
+      <footer className="app-footer flex items-center justify-between border-t border-neutral-200 pt-2 text-[12px] text-neutral-400 dark:border-neutral-700 dark:text-neutral-500">
         <span className="flex items-center gap-1">
           <BellOff className="h-3.5 w-3.5" />
           <kbd dir="ltr" className="rounded border border-neutral-300 px-1 font-mono text-[11px] dark:border-neutral-600">
@@ -312,7 +312,7 @@ export default function App() {
   );
 }
 
-function FilterChip({
+export function FilterChip({
   active,
   onClick,
   label,
@@ -328,7 +328,7 @@ function FilterChip({
       onClick={onClick}
       className={`rounded-full border px-2.5 py-1 text-[12.5px] font-medium transition-colors ${
         active
-          ? "border-neutral-900 bg-neutral-900 text-white dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-900"
+          ? "chip-active border-transparent"
           : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
       }`}
     >

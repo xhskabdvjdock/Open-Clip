@@ -41,7 +41,7 @@ export function ConfirmModal({
       onClick={onCancel}
     >
       <div
-        className="animate-fadeIn w-full max-w-sm rounded-xl border border-neutral-200 bg-white p-5 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
+        className="modal-panel animate-fadeIn w-full max-w-sm rounded-xl border border-neutral-200 bg-white p-5 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-[15px] font-semibold text-neutral-900 dark:text-neutral-50">
@@ -61,9 +61,7 @@ export function ConfirmModal({
             onClick={onConfirm}
             autoFocus
             className={`rounded-lg px-3.5 py-1.5 text-[13px] font-medium text-white ${
-              danger
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-neutral-900 hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-white"
+              danger ? "bg-red-600 hover:bg-red-700" : "btn-primary"
             }`}
           >
             {confirmLabel}
@@ -104,7 +102,7 @@ export function DetailsModal({
       onClick={onClose}
     >
       <div
-        className="animate-fadeIn flex max-h-[85vh] w-full max-w-lg flex-col rounded-xl border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-800"
+        className="modal-panel animate-fadeIn flex max-h-[85vh] w-full max-w-lg flex-col rounded-xl border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-800"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3 dark:border-neutral-700">
@@ -121,7 +119,7 @@ export function DetailsModal({
           </button>
         </div>
 
-        <div className="overflow-y-auto px-4 py-3">
+        <div className="textscale overflow-y-auto px-4 py-3">
           {item.content_type === "code" ? (
             <pre className="overflow-x-auto rounded-lg border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-900">
               <code className="codeblock whitespace-pre-wrap break-words text-neutral-800 dark:text-neutral-100">
@@ -164,7 +162,7 @@ export function DetailsModal({
         <div className="flex items-center gap-2 border-t border-neutral-200 px-4 py-3 dark:border-neutral-700">
           <button
             onClick={() => void doCopy(item)}
-            className="flex items-center gap-1.5 rounded-lg bg-neutral-900 px-3 py-1.5 text-[13px] font-medium text-white hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-white"
+            className="btn-primary flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-medium"
           >
             <Copy className="h-3.5 w-3.5" /> {t.copy}
           </button>

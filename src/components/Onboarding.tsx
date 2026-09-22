@@ -13,7 +13,7 @@ export default function Onboarding() {
       <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-8 text-center shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
         {step === 0 && (
           <>
-            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900">
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl btn-primary">
               <ClipboardList className="h-6 w-6" />
             </span>
             <h1 className="mt-4 text-xl font-semibold text-neutral-900 dark:text-neutral-50">
@@ -45,7 +45,7 @@ export default function Onboarding() {
               </button>
               <button
                 onClick={() => setStep(1)}
-                className="flex-1 rounded-lg bg-neutral-900 px-4 py-2 text-[14px] font-medium text-white hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-white"
+                className="flex-1 rounded-lg btn-primary px-4 py-2 text-[14px] font-medium"
               >
                 {t.next}
               </button>
@@ -54,7 +54,7 @@ export default function Onboarding() {
         )}
         {step === 1 && (
           <>
-            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900">
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl btn-primary">
               <Keyboard className="h-6 w-6" />
             </span>
             <h1 className="mt-4 text-xl font-semibold text-neutral-900 dark:text-neutral-50">
@@ -71,7 +71,7 @@ export default function Onboarding() {
             <button
               onClick={done}
               autoFocus
-              className="mt-6 w-full rounded-lg bg-neutral-900 px-4 py-2 text-[14px] font-medium text-white hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-white"
+              className="mt-6 w-full rounded-lg btn-primary px-4 py-2 text-[14px] font-medium"
             >
               {t.getStarted}
             </button>

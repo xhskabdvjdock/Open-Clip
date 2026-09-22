@@ -46,9 +46,14 @@ body {
 
 /* Focus states for a11y */
 :focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--accent);
   outline-offset: 1px;
   border-radius: 4px;
+}
+
+::selection {
+  background-color: var(--accent);
+  color: var(--accent-fg);
 }
 
 /* Picker window: frameless feel */
@@ -78,6 +83,438 @@ code.codeblock {
 }
 .animate-fadeIn {
   animation: fadeIn 120ms ease-out;
+}
+
+/* RTL: logical properties mostly handled by Tailwind + dir attr */
+[dir="rtl"] .ltr-only {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* ============================================================
+   Appearance system — design tokens.
+   Defaults == today's look (Default preset). Custom themes
+   override via html[data-theme-active="custom"] further below.
+   ============================================================ */
+
+:root {
+  --background: #f5f5f5;
+  --surface: #ffffff;
+  --surface-elevated: #f5f5f5;
+  --foreground: #171717;
+  --muted: #737373;
+  --border: #e5e5e5;
+  --accent: #2563eb;
+  --accent-fg: #ffffff;
+  --accent-strong: #171717;
+  --accent-strong-fg: #ffffff;
+  --accent-soft: #f5f5f5;
+  --danger: #dc2626;
+  --success: #16a34a;
+  --warning: #b45309;
+  --radius-base: 4px;
+  --radius-sm: 2px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-xxl: 16px;
+  --radius-pill: 9999px;
+}
+
+.dark {
+  --background: #171717;
+  --surface: #262626;
+  --surface-elevated: #404040;
+  --foreground: #f5f5f5;
+  --muted: #a3a3a3;
+  --border: #404040;
+  --accent: #2563eb;
+  --accent-fg: #ffffff;
+  --accent-strong: #f5f5f5;
+  --accent-strong-fg: #171717;
+  --accent-soft: #404040;
+  --danger: #f87171;
+  --success: #34d399;
+  --warning: #fbbf24;
+}
+
+/* ---- Accent-driven elements (var-driven, defaults preserve look) ---- */
+
+.btn-primary {
+  background-color: var(--accent-strong);
+  color: var(--accent-strong-fg);
+}
+.btn-primary:hover {
+  filter: brightness(0.92);
+}
+.dark .btn-primary:hover {
+  filter: brightness(1.15);
+}
+
+.chip-active,
+.seg-active {
+  background-color: var(--accent-strong);
+  color: var(--accent-strong-fg);
+}
+
+.toggle-on {
+  background-color: var(--accent-strong);
+}
+
+.picker-selected {
+  background-color: var(--accent-soft);
+}
+
+/* ---- Corner radius tokens (medium == Tailwind defaults) ---- */
+
+html[data-radius] .rounded {
+  border-radius: var(--radius-base);
+}
+html[data-radius] .rounded-sm {
+  border-radius: var(--radius-sm);
+}
+html[data-radius] .rounded-md {
+  border-radius: var(--radius-md);
+}
+html[data-radius] .rounded-lg {
+  border-radius: var(--radius-lg);
+}
+html[data-radius] .rounded-xl {
+  border-radius: var(--radius-xl);
+}
+html[data-radius] .rounded-2xl {
+  border-radius: var(--radius-xxl);
+}
+html[data-radius] .rounded-full {
+  border-radius: var(--radius-pill);
+}
+
+/* ---- Density ---- */
+
+html[data-density="compact"] .clip-card {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+html[data-density="compact"] .clip-list {
+  row-gap: 4px;
+}
+html[data-density="compact"] .picker-row {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+html[data-density="spacious"] .clip-card {
+  padding-top: 14px;
+  padding-bottom: 14px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+html[data-density="spacious"] .clip-list {
+  row-gap: 12px;
+}
+html[data-density="spacious"] .picker-row {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+/* ---- Card style ---- */
+
+html[data-cardstyle="minimal"] .clip-card {
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+html[data-cardstyle="minimal"] .clip-card:hover {
+  background-color: var(--surface);
+  border-color: var(--border);
+}
+html[data-cardstyle="list"] .clip-card {
+  background-color: transparent;
+  border-left-width: 0;
+  border-right-width: 0;
+  border-top-width: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+/* ---- Shadow ---- */
+
+html[data-shadow="none"] .clip-card,
+html[data-shadow="none"] .picker-shell,
+html[data-shadow="none"] .modal-panel {
+  box-shadow: none;
+}
+html[data-shadow="medium"] .clip-card {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+}
+html[data-shadow="medium"] .picker-shell,
+html[data-shadow="medium"] .modal-panel {
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.22);
+}
+html[data-shadow="strong"] .clip-card {
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.16);
+}
+html[data-shadow="strong"] .picker-shell,
+html[data-shadow="strong"] .modal-panel {
+  box-shadow: 0 24px 64px rgb(0 0 0 / 0.32);
+}
+
+/* ---- Borders (transparent keeps layout, 2px stays subtle) ---- */
+
+html[data-borders="none"] .clip-card,
+html[data-borders="none"] .app-search,
+html[data-borders="none"] .modal-panel,
+html[data-borders="none"] .picker-shell {
+  border-color: transparent;
+}
+html[data-borders="visible"] .clip-card,
+html[data-borders="visible"] .app-search {
+  border-width: 2px;
+}
+
+/* ---- Font ---- */
+
+html[data-font="system"] body {
+  font-family: ui-sans-serif, system-ui, "Segoe UI", Tahoma, Arial, sans-serif;
+}
+
+/* ---- Text size (bounded zoom on content areas, layout-safe) ---- */
+
+html[data-textsize="small"] .textscale {
+  zoom: 0.92;
+}
+html[data-textsize="large"] .textscale {
+  zoom: 1.08;
+}
+
+/* ---- Header ---- */
+
+html[data-header="minimal"] .app-footer {
+  display: none;
+}
+html[data-header="minimal"] .app-header-title {
+  font-size: 13px;
+}
+html[data-header="prominent"] .app-header-title {
+  font-size: 17px;
+}
+
+/* ============================================================
+   Custom-theme surface remap.
+   ONLY active for non-default presets. Every rule below maps one
+   of the app's actual gray/semantic utilities onto theme tokens,
+   so custom themes recolor the whole UI consistently.
+   ============================================================ */
+
+html[data-theme-active="custom"] body {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+html[data-theme-active="custom"] body.picker {
+  background-color: var(--surface);
+}
+html[data-theme-active="custom"] *::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+}
+
+/* light surfaces */
+html[data-theme-active="custom"] .bg-white {
+  background-color: var(--surface);
+}
+html[data-theme-active="custom"] .bg-neutral-50 {
+  background-color: var(--surface-elevated);
+}
+html[data-theme-active="custom"] .bg-neutral-100 {
+  background-color: var(--surface-elevated);
+}
+html[data-theme-active="custom"] .bg-neutral-300 {
+  background-color: var(--border);
+}
+html[data-theme-active="custom"] .bg-neutral-700 {
+  background-color: var(--accent-strong);
+}
+html[data-theme-active="custom"] .bg-neutral-800 {
+  background-color: var(--accent-strong);
+}
+html[data-theme-active="custom"] .bg-neutral-900 {
+  background-color: var(--accent-strong);
+}
+html[data-theme-active="custom"] .hover\:bg-neutral-100:hover {
+  background-color: var(--surface-elevated);
+}
+html[data-theme-active="custom"] .hover\:bg-neutral-200\/50:hover,
+html[data-theme-active="custom"] .hover\:bg-neutral-200\/60:hover {
+  background-color: var(--surface-elevated);
+}
+html[data-theme-active="custom"] .hover\:bg-neutral-700:hover {
+  background-color: var(--accent-strong);
+  filter: brightness(0.92);
+}
+html[data-theme-active="custom"] .hover\:bg-red-50:hover,
+html[data-theme-active="custom"] .hover\:bg-red-100:hover {
+  background-color: var(--accent-soft);
+}
+html[data-theme-active="custom"] .hover\:bg-red-700:hover {
+  background-color: var(--danger);
+  filter: brightness(0.92);
+}
+
+/* dark surfaces */
+html[data-theme-active="custom"] .dark .dark\:bg-neutral-600 {
+  background-color: var(--surface-elevated);
+}
+html[data-theme-active="custom"] .dark .dark\:bg-neutral-700 {
+  background-color: var(--surface-elevated);
+}
+html[data-theme-active="custom"] .dark .dark\:bg-neutral-800 {
+  background-color: var(--surface);
+}
+html[data-theme-active="custom"] .dark .dark\:bg-neutral-900 {
+  background-color: var(--surface-elevated);
+}
+html[data-theme-active="custom"] .dark .dark\:bg-neutral-100 {
+  background-color: var(--accent-strong);
+}
+html[data-theme-active="custom"] .dark .dark\:hover\:bg-neutral-700:hover {
+  background-color: var(--surface-elevated);
+}
+html[data-theme-active="custom"] .dark .dark\:hover\:bg-neutral-800:hover {
+  background-color: var(--surface-elevated);
+}
+html[data-theme-active="custom"] .dark .dark\:hover\:bg-red-900:hover,
+html[data-theme-active="custom"] .dark .dark\:hover\:bg-red-950:hover {
+  background-color: var(--accent-soft);
+}
+
+/* light text */
+html[data-theme-active="custom"] .text-neutral-900,
+html[data-theme-active="custom"] .text-neutral-800,
+html[data-theme-active="custom"] .text-neutral-700 {
+  color: var(--foreground);
+}
+html[data-theme-active="custom"] .text-neutral-600,
+html[data-theme-active="custom"] .text-neutral-500,
+html[data-theme-active="custom"] .text-neutral-400 {
+  color: var(--muted);
+}
+html[data-theme-active="custom"] .text-white {
+  color: var(--accent-strong-fg);
+}
+html[data-theme-active="custom"] .hover\:text-neutral-600:hover {
+  color: var(--foreground);
+}
+html[data-theme-active="custom"] .focus\:border-neutral-400:focus {
+  border-color: var(--accent);
+}
+
+/* dark text */
+html[data-theme-active="custom"] .dark .dark\:text-neutral-50,
+html[data-theme-active="custom"] .dark .dark\:text-neutral-100,
+html[data-theme-active="custom"] .dark .dark\:text-neutral-900 {
+  color: var(--foreground);
+}
+html[data-theme-active="custom"] .dark .dark\:text-neutral-200,
+html[data-theme-active="custom"] .dark .dark\:text-neutral-300,
+html[data-theme-active="custom"] .dark .dark\:text-neutral-400 {
+  color: var(--muted);
+}
+html[data-theme-active="custom"] .dark .dark\:hover\:text-neutral-300:hover {
+  color: var(--foreground);
+}
+html[data-theme-active="custom"] .dark .dark\:focus\:border-neutral-50:focus {
+  border-color: var(--accent);
+}
+
+/* borders */
+html[data-theme-active="custom"] .border-neutral-200,
+html[data-theme-active="custom"] .border-neutral-300,
+html[data-theme-active="custom"] .border-neutral-400 {
+  border-color: var(--border);
+}
+html[data-theme-active="custom"] .dark .dark\:border-neutral-50,
+html[data-theme-active="custom"] .dark .dark\:border-neutral-100,
+html[data-theme-active="custom"] .dark .dark\:border-neutral-600,
+html[data-theme-active="custom"] .dark .dark\:border-neutral-700 {
+  border-color: var(--border);
+}
+html[data-theme-active="custom"] .dark .dark\:hover\:border-neutral-600:hover {
+  border-color: var(--border);
+}
+
+/* semantic: danger */
+html[data-theme-active="custom"] .bg-red-600 {
+  background-color: var(--danger);
+}
+html[data-theme-active="custom"] .bg-red-50,
+html[data-theme-active="custom"] .bg-red-50\/50 {
+  background-color: var(--surface);
+}
+html[data-theme-active="custom"] .border-red-200,
+html[data-theme-active="custom"] .border-red-300 {
+  border-color: var(--danger);
+}
+html[data-theme-active="custom"] .text-red-600,
+html[data-theme-active="custom"] .text-red-700,
+html[data-theme-active="custom"] .text-red-800 {
+  color: var(--danger);
+}
+html[data-theme-active="custom"] .hover\:text-red-600:hover {
+  color: var(--danger);
+}
+html[data-theme-active="custom"] .dark .dark\:bg-red-950,
+html[data-theme-active="custom"] .dark .dark\:bg-red-950\/30 {
+  background-color: var(--surface);
+}
+html[data-theme-active="custom"] .dark .dark\:border-red-800,
+html[data-theme-active="custom"] .dark .dark\:border-red-900 {
+  border-color: var(--danger);
+}
+html[data-theme-active="custom"] .dark .dark\:text-red-200,
+html[data-theme-active="custom"] .dark .dark\:text-red-300 {
+  color: var(--danger);
+}
+
+/* semantic: warning (amber washes become surface + warning accents) */
+html[data-theme-active="custom"] .bg-amber-50 {
+  background-color: var(--surface);
+}
+html[data-theme-active="custom"] .bg-amber-700 {
+  background-color: var(--warning);
+}
+html[data-theme-active="custom"] .border-amber-300 {
+  border-color: var(--warning);
+}
+html[data-theme-active="custom"] .text-amber-700,
+html[data-theme-active="custom"] .text-amber-800 {
+  color: var(--warning);
+}
+html[data-theme-active="custom"] .hover\:bg-amber-800:hover {
+  background-color: var(--warning);
+  filter: brightness(0.92);
+}
+html[data-theme-active="custom"] .dark .dark\:bg-amber-950 {
+  background-color: var(--surface);
+}
+html[data-theme-active="custom"] .dark .dark\:border-amber-800 {
+  border-color: var(--warning);
+}
+html[data-theme-active="custom"] .dark .dark\:text-amber-200 {
+  color: var(--warning);
+}
+
+/* semantic: success */
+html[data-theme-active="custom"] .bg-green-50 {
+  background-color: var(--surface);
+}
+html[data-theme-active="custom"] .text-green-600,
+html[data-theme-active="custom"] .text-green-700 {
+  color: var(--success);
+}
+html[data-theme-active="custom"] .dark .dark\:text-green-300 {
+  color: var(--success);
 }
 
 /* RTL: logical properties mostly handled by Tailwind + dir attr */

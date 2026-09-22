@@ -1337,6 +1337,36 @@ fn delete_all_data(app: AppHandle, state: State<Paths>) -> Result<(), String> {
     Ok(())
 }
 
+/// Current mouse cursor position in physical screen pixels (Windows).
+/// Used to place the Quick Picker near the cursor. Other platforms fall
+/// back to centered placement on the frontend side.
+#[tauri::command]
+fn get_cursor_position() -> Result<(i32, i32), String> {
+    #[cfg(target_os = "windows")]
+    {
+        #[repr(C)]
+        struct Point {
+            x: i32,
+            y: i32,
+        }
+        #[link(name = "user32")]
+        unsafe extern "system" {
+            fn GetCursorPos(lp_point: *mut Point) -> i32;
+        }
+        unsafe {
+            let mut p = Point { x: 0, y: 0 };
+            if GetCursorPos(&mut p) != 0 {
+                return Ok((p.x, p.y));
+            }
+        }
+        Err("cursor position unavailable".into())
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("not supported on this platform".into())
+    }
+}
+
 #[tauri::command]
 fn show_picker(app: AppHandle) -> Result<(), String> {
     capture_paste_target(&app);
@@ -1686,6 +1716,7 @@ fn main() {
             delete_all_data,
             show_picker,
             hide_picker,
+            get_cursor_position,
             export_json,
             export_csv,
             import_backup

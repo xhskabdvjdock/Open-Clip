@@ -30,6 +30,13 @@ export function fullDate(ts: number, lang: "en" | "ar" = "en"): string {
   });
 }
 
+export function timeOnly(ts: number, lang: "en" | "ar" = "en"): string {
+  return new Date(ts).toLocaleTimeString(lang === "ar" ? "ar" : "en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function counts(text: string): { chars: number; words: number } {
   const chars = [...text].length;
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;

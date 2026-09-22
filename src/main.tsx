@@ -8,6 +8,7 @@ import "./index.css";
 import App from "./App";
 import Picker from "./Picker";
 import { StoreProvider } from "./lib/store";
+import { AppearanceProvider } from "./lib/appearance";
 
 /** Synchronous label detection via Tauri internals (no chunk loading). */
 function syncLabel(): string | null {
@@ -110,7 +111,9 @@ function Root() {
 
   if (!label) return null;
   return (
-    <StoreProvider>{label === "picker" ? <Picker /> : <App />}</StoreProvider>
+    <StoreProvider>
+      <AppearanceProvider>{label === "picker" ? <Picker /> : <App />}</AppearanceProvider>
+    </StoreProvider>
   );
 }
 

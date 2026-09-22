@@ -60,7 +60,7 @@ export default function CommandMenu({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/30 p-4 pt-[12vh]" onClick={onClose}>
       <div
-        className="animate-fadeIn w-full max-w-md overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-800"
+        className="modal-panel animate-fadeIn w-full max-w-md overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-800"
         role="dialog"
         aria-modal="true"
         aria-label={t.commandTitle}
@@ -93,7 +93,7 @@ export default function CommandMenu({ onClose }: { onClose: () => void }) {
                 }}
                 className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-[13.5px] ${
                   i === idx
-                    ? "bg-neutral-100 dark:bg-neutral-700"
+                    ? "picker-selected"
                     : "text-neutral-700 dark:text-neutral-200"
                 }`}
               >

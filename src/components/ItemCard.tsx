@@ -10,8 +10,9 @@ import {
   Trash2,
 } from "lucide-react";
 import type { ClipboardItem, ContentType } from "../types";
-import { preview, timeAgo } from "../lib/format";
+import { fullDate, preview, timeAgo, timeOnly } from "../lib/format";
 import { useImagePreview } from "../lib/useImagePreview";
+import { PREVIEW_LENGTH_MAP, useAppearance } from "../lib/appearance";
 import { useStore } from "../lib/store";
 
 export function TypeIcon({ type, className = "h-3.5 w-3.5" }: { type: ContentType; className?: string }) {
@@ -58,12 +59,27 @@ export default function ItemCard({
   compact?: boolean;
 }) {
   const { strings: t, lang, doCopy, doPin, doDelete, lastCopiedId } = useStore();
+  const { appearance } = useAppearance();
   const copied = lastCopiedId === item.id;
   const thumb = useImagePreview(item, 112);
+  const maxPreview = PREVIEW_LENGTH_MAP[appearance.previewLength];
+
+  const timeText =
+    appearance.timestampStyle === "absolute"
+      ? timeOnly(item.last_copied_at, lang)
+      : appearance.timestampStyle === "full"
+        ? fullDate(item.last_copied_at, lang)
+        : timeAgo(item.last_copied_at, lang);
+  const words = item.word_count ?? 0;
+  const showMeta =
+    appearance.showType ||
+    appearance.showTime ||
+    (appearance.showWords && words > 0) ||
+    item.is_pinned;
 
   return (
     <div
-      className="group relative rounded-lg border border-neutral-200 bg-white px-3 py-2.5 hover:border-neutral-300 hover:shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
+      className="clip-card group relative rounded-lg border border-neutral-200 bg-white px-3 py-2.5 hover:border-neutral-300 hover:shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
       role="listitem"
     >
       <button
@@ -73,7 +89,7 @@ export default function ItemCard({
       >
         {item.content_type === "code" ? (
           <code className="codeblock item-preview whitespace-pre-wrap text-neutral-800 dark:text-neutral-100">
-            {preview(item.content, 220)}
+            {preview(item.content, maxPreview)}
           </code>
         ) : item.content_type === "image" ? (
           <span className="flex items-center gap-2.5">
@@ -92,25 +108,39 @@ export default function ItemCard({
               </span>
             )}
             <span className="item-preview text-neutral-800 dark:text-neutral-100">
-              {preview(item.content || "Image", 120)}
+              {preview(item.content || "Image", maxPreview)}
             </span>
           </span>
         ) : (
           <span className="item-preview text-[13.5px] leading-5 text-neutral-800 dark:text-neutral-100">
-            {preview(item.content, compact ? 120 : 220)}
+            {preview(item.content, compact ? 120 : maxPreview)}
           </span>
         )}
-        <span className="mt-1.5 flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-          <TypeIcon type={item.content_type} />
-          <span className="capitalize">{typeLabel(item.content_type, t)}</span>
-          <span aria-hidden>·</span>
-          <time dateTime={new Date(item.last_copied_at).toISOString()}>
-            {timeAgo(item.last_copied_at, lang)}
-          </time>
-          {item.is_pinned && (
-            <Pin className="h-3 w-3 text-neutral-400" aria-label={t.pin} />
-          )}
-        </span>
+        {showMeta && (
+          <span className="mt-1.5 flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+            {appearance.showType && (
+              <>
+                <TypeIcon type={item.content_type} />
+                <span className="capitalize">{typeLabel(item.content_type, t)}</span>
+              </>
+            )}
+            {appearance.showType && appearance.showTime && <span aria-hidden>·</span>}
+            {appearance.showTime && (
+              <time dateTime={new Date(item.last_copied_at).toISOString()}>{timeText}</time>
+            )}
+            {(appearance.showType || appearance.showTime) && appearance.showWords && words > 0 && (
+              <span aria-hidden>·</span>
+            )}
+            {appearance.showWords && words > 0 && (
+              <span>
+                {words} {t.wordsShort}
+              </span>
+            )}
+            {item.is_pinned && (
+              <Pin className="h-3 w-3 text-neutral-400" aria-label={t.pin} />
+            )}
+          </span>
+        )}
       </button>
 
       {/* Hover actions */}

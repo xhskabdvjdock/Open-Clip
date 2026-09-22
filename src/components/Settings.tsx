@@ -17,13 +17,14 @@ import { APP_VERSION } from "../version";
 import { useStore } from "../lib/store";
 import { isTauriEnv } from "../lib/store-api";
 import { useUpdateCheck } from "../lib/updates";
+import Appearance from "./Appearance";
 import { Banner, ConfirmModal } from "./Modals";
 
 export default function Settings({ onClose }: { onClose: () => void }) {
   const { strings: t, settings: s, updateSettings, doDeleteAll } = useStore();
-  const [tab, setTab] = useState<"general" | "clipboard" | "privacy" | "shortcuts" | "about">(
-    "general",
-  );
+  const [tab, setTab] = useState<
+    "general" | "clipboard" | "privacy" | "shortcuts" | "about" | "appearance"
+  >("general");
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -109,7 +110,9 @@ export default function Settings({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" onClick={onClose}>
       <div
-        className="animate-fadeIn flex max-h-[88vh] w-full max-w-2xl overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-800"
+        className={`modal-panel animate-fadeIn flex max-h-[88vh] w-full overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-800 ${
+          tab === "appearance" ? "max-w-4xl" : "max-w-2xl"
+        }`}
         role="dialog"
         aria-modal="true"
         aria-label={t.settings}
@@ -121,6 +124,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
           aria-label={t.settings}
         >
           <Tab id="general" label={t.general} tab={tab} setTab={setTab} />
+          <Tab id="appearance" label={t.appearance} tab={tab} setTab={setTab} />
           <Tab id="clipboard" label={t.clipboard} tab={tab} setTab={setTab} />
           <Tab id="privacy" label={t.privacy} tab={tab} setTab={setTab} />
           <Tab id="shortcuts" label={t.shortcuts} tab={tab} setTab={setTab} />
@@ -178,6 +182,8 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                 </Row>
               </div>
             )}
+
+            {tab === "appearance" && <Appearance />}
 
             {tab === "clipboard" && (
               <div className="space-y-4">
@@ -331,7 +337,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
           <div className="flex justify-end border-t border-neutral-200 px-5 py-3 dark:border-neutral-700">
             <button
               onClick={onClose}
-              className="rounded-lg bg-neutral-900 px-4 py-1.5 text-[13px] font-medium text-white hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-white"
+              className="btn-primary rounded-lg px-4 py-1.5 text-[13px] font-medium"
             >
               {t.close}
             </button>
@@ -373,10 +379,10 @@ function Tab({
   tab,
   setTab,
 }: {
-  id: "general" | "clipboard" | "privacy" | "shortcuts" | "about";
+  id: "general" | "appearance" | "clipboard" | "privacy" | "shortcuts" | "about";
   label: string;
   tab: string;
-  setTab: (t: "general" | "clipboard" | "privacy" | "shortcuts" | "about") => void;
+  setTab: (t: "general" | "appearance" | "clipboard" | "privacy" | "shortcuts" | "about") => void;
 }) {
   const active = tab === id;
   return (
@@ -426,7 +432,7 @@ function Toggle({
         aria-label={label}
         onClick={() => onChange(!checked)}
         className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-          checked ? "bg-neutral-900 dark:bg-neutral-100" : "bg-neutral-300 dark:bg-neutral-600"
+          checked ? "toggle-on" : "bg-neutral-300 dark:bg-neutral-600"
         }`}
       >
         <span
@@ -466,7 +472,7 @@ function Segment({
           onClick={() => onChange(o.v)}
           className={`rounded-md px-2.5 py-1 text-[12.5px] font-medium ${
             value === o.v
-              ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+              ? "seg-active"
               : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
           }`}
         >
