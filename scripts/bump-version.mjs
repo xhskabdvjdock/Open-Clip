@@ -59,7 +59,8 @@ function main() {
   if (!/^\d+\.\d+\.\d+$/.test(current)) fail(`current version "${current}" is not semver`);
 
   const next = parsed.mode === "explicit" ? parsed.version : bump(current, parsed.mode);
-  if (next === current) fail(`already at ${current}`);
+  const syncOnly = next === current;
+  if (syncOnly && parsed.mode !== "explicit") fail(`already at ${current}`);
 
   // 1. package.json
   pkg.version = next;
@@ -69,9 +70,8 @@ function main() {
   {
     const p = FILES.versionTs;
     const src = readFileSync(p, "utf8");
-    const out = src.replace(/APP_VERSION\s*=\s*"[^"]+"/, `APP_VERSION = "${next}"`);
-    if (out === src) fail("APP_VERSION not found in src/version.ts");
-    writeFileSync(p, out);
+    if (!/APP_VERSION\s*=\s*"[^"]+"/.test(src)) fail("APP_VERSION not found in src/version.ts");
+    writeFileSync(p, src.replace(/APP_VERSION\s*=\s*"[^"]+"/, `APP_VERSION = "${next}"`));
   }
 
   // 3. src-tauri/tauri.conf.json
@@ -103,7 +103,11 @@ function main() {
     writeFileSync(p, out.join("\n"));
   }
 
-  console.log(`bump-version: ${current} -> ${next}`);
+  console.log(
+    syncOnly
+      ? `bump-version: already at ${current} — syncing other files to it`
+      : `bump-version: ${current} -> ${next}`,
+  );
   console.log("  updated: package.json, src/version.ts, src-tauri/tauri.conf.json, src-tauri/Cargo.toml");
   console.log("  (Cargo.lock refreshes automatically on the next build)");
   console.log("Next steps:");
