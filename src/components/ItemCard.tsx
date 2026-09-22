@@ -168,7 +168,7 @@ export default function ItemCard({
   );
 }
 
-function IconBtn({
+export function IconBtn({
   children,
   title,
   label,

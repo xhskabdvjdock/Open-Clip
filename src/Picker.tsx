@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pin, Search } from "lucide-react";
+import { Pin, Search, Trash2 } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { currentMonitor, getCurrentWindow } from "@tauri-apps/api/window";
 import { LogicalSize, PhysicalPosition } from "@tauri-apps/api/dpi";
@@ -10,7 +10,7 @@ import { preview, timeAgo } from "./lib/format";
 import { useImagePreview } from "./lib/useImagePreview";
 import { PICKER_SIZE_MAP, useAppearance } from "./lib/appearance";
 import type { PickerPosition, PickerSize } from "./lib/appearance";
-import { TypeIcon, typeLabel } from "./components/ItemCard";
+import { IconBtn, TypeIcon, typeLabel } from "./components/ItemCard";
 
 /** Apply picker window size + position. Center/top work everywhere;
  *  near-cursor uses real cursor coordinates on Windows, else centers. */
@@ -70,7 +70,11 @@ export default function Picker() {
 
   const list = useMemo(() => {
     const query = q.trim().toLowerCase();
-    const sorted = [...items].sort((a, b) => b.last_copied_at - a.last_copied_at);
+    // Pinned items always stay on top, then most recently copied first.
+    const sorted = [...items].sort(
+      (a, b) =>
+        Number(b.is_pinned) - Number(a.is_pinned) || b.last_copied_at - a.last_copied_at,
+    );
     if (!query) return sorted.slice(0, 50);
     return sorted
       .filter(
@@ -152,7 +156,8 @@ export default function Picker() {
       setIdx((i) => Math.max(0, i - 1));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      const it = list[idx];
+      const safe = Math.min(idx, Math.max(0, list.length - 1));
+      const it = list[safe];
       if (it) void choose(it);
     } else if (e.key === "Escape") {
       e.preventDefault();
@@ -238,15 +243,16 @@ export function PickerRow({
   onChoose: () => void;
   onKey: (e: React.KeyboardEvent) => void;
 }) {
-  const { strings: t, lang } = useStore();
+  const { strings: t, lang, doPin, doDelete } = useStore();
   const { appearance } = useAppearance();
   const thumb = useImagePreview(item, 64);
   const isImage = item.content_type === "image";
-  const detailed = appearance.pickerStyle === "detailed";
   const minimal = appearance.pickerStyle === "minimal";
+  const words = item.word_count ?? 0;
+  const showWords = appearance.pickerStyle === "detailed" && words > 0;
 
   return (
-    <li>
+    <li className="group relative">
       <button
         data-idx={index}
         role="option"
@@ -284,10 +290,18 @@ export function PickerRow({
                 <span className="capitalize">{typeLabel(item.content_type, t)}</span>
                 <span aria-hidden>·</span>
                 <span>{timeAgo(item.last_copied_at, lang)}</span>
-                {detailed && item.is_pinned && (
+                {item.is_pinned && (
                   <>
                     <span aria-hidden>·</span>
                     <Pin className="h-3 w-3" aria-label={t.pin} />
+                  </>
+                )}
+                {showWords && (
+                  <>
+                    <span aria-hidden>·</span>
+                    <span>
+                      {words} {t.wordsShort}
+                    </span>
                   </>
                 )}
               </span>
@@ -295,6 +309,24 @@ export function PickerRow({
           </span>
         </span>
       </button>
+      {/* Row actions: pin keeps the item on top, delete removes it */}
+      <div
+        className={`absolute end-2 top-1.5 gap-1 ${
+          selected ? "flex" : "hidden group-hover:flex group-focus-within:flex"
+        }`}
+      >
+        <IconBtn
+          title={item.is_pinned ? t.unpin : t.pin}
+          label={item.is_pinned ? t.unpin : t.pin}
+          active={item.is_pinned}
+          onClick={() => void doPin(item.id)}
+        >
+          <Pin className="h-3.5 w-3.5" />
+        </IconBtn>
+        <IconBtn title={t.delete} label={t.delete} onClick={() => void doDelete(item.id)}>
+          <Trash2 className="h-3.5 w-3.5" />
+        </IconBtn>
+      </div>
     </li>
   );
 }
