@@ -1,6 +1,6 @@
 {
   "name": "open-clip",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Open Clip - lightweight, private, native-feeling clipboard manager",
   "type": "module",
